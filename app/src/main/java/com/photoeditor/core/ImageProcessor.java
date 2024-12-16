@@ -1,23 +1,29 @@
 package com.photoeditor.core;
 
-import org.opencv.core.*;
-import org.opencv.imgproc.Imgproc;
-
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.Point;
+import org.opencv.core.Rect;
+import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
+
 public class ImageProcessor {
-    public static Mat histogramEqualization(Mat src) {
-        Mat ycrcb = new Mat();
-        Imgproc.cvtColor(src, ycrcb, Imgproc.COLOR_BGR2YCrCb);
-        List<Mat> channels = new ArrayList<>();
-        Core.split(ycrcb, channels);
-        Imgproc.equalizeHist(channels.get(0), channels.get(0));
-        Core.merge(channels, ycrcb);
-        Mat result = new Mat();
-        Imgproc.cvtColor(ycrcb, result, Imgproc.COLOR_YCrCb2BGR);
-        return result;
+public static Mat histogramEqualization(Mat src) {
+    List<Mat> channels = new ArrayList<>();
+    Core.split(src, channels);
+    for (int i = 0; i < channels.size(); i++) {
+        Imgproc.equalizeHist(channels.get(i), channels.get(i));
     }
+    Mat result = new Mat();
+    Core.merge(channels, result);
+
+    return result;
+}
+
 
     public static Mat negative(Mat src) {
         Mat dst = new Mat();
@@ -55,21 +61,16 @@ public class ImageProcessor {
     }
 
     public static Mat adjustBrightnessContrast(Mat src, double alpha, double beta) {
-        // alpha > 1.0: 대비 증가
-        // beta: 밝기 조절
         Mat dst = new Mat();
         src.convertTo(dst, -1, alpha, beta);
         return dst;
     }
 
     public static Mat adjustHueSaturation(Mat src, int hueAdjust, int satAdjust) {
-        // HSV로 변환 후 H,S 채널 조정
         Mat hsv = new Mat();
         Imgproc.cvtColor(src, hsv, Imgproc.COLOR_BGR2HSV);
         List<Mat> channels = new ArrayList<>();
         Core.split(hsv, channels);
-        // H 채널: 0~179, S 채널: 0~255
-        // hueAdjust, satAdjust를 적용할 때 범위 체크 필요
         Mat h = channels.get(0);
         Mat s = channels.get(1);
         for (int r=0; r<h.rows(); r++) {
@@ -108,7 +109,6 @@ public class ImageProcessor {
     }
 
     public static Mat rotate(Mat src, double angle) {
-        // 중심을 기준으로 회전
         Point center = new Point(src.cols()/2.0, src.rows()/2.0);
         Mat rotMat = Imgproc.getRotationMatrix2D(center, angle, 1.0);
         Mat dst = new Mat();
